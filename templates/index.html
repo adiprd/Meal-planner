@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Meal Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif; 
+            background: #f5f5f5; 
+            color: #333;
+        }
+        .container { max-width: 800px; margin: 0 auto; padding: 20px; }
+        .header { 
+            background: #2ecc71; 
+            color: white; 
+            padding: 30px; 
+            text-align: center;
+            border-radius: 10px;
+            margin-bottom: 30px;
+        }
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: 500; }
+        input, select {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        button {
+            background: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover { background: #27ae60; }
+        .inventory-item {
+            background: #ecf0f1;
+            padding: 8px 12px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 5px;
+            font-size: 14px;
+        }
+        .meal-card {
+            border-left: 4px solid #2ecc71;
+            padding: 15px;
+            margin: 10px 0;
+            background: #f8f9fa;
+        }
+        .shopping-list { margin-top: 20px; }
+        .shopping-item {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🍽️ Meal Planner</h1>
+            <p>Plan your meals based on your goals and what you have</p>
+        </div>
+
+        <div class="card">
+            <h3>Your Goals</h3>
+            <div class="form-group">
+                <label>Diet Type</label>
+                <select id="dietType">
+                    <option value="balanced">Balanced</option>
+                    <option value="vegetarian">Vegetarian</option>
+                    <option value="low_carb">Low Carb</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Weekly Budget ($)</label>
+                <input type="number" id="budget" value="100" min="50" max="500">
+            </div>
+            <div class="form-group">
+                <label>Days to Plan</label>
+                <input type="number" id="days" value="7" min="1" max="14">
+            </div>
+        </div>
+
+        <div class="card">
+            <h3>Your Inventory</h3>
+            <div class="form-group">
+                <label>Add Item</label>
+                <input type="text" id="newItem" placeholder="e.g., rice, eggs, chicken...">
+                <button onclick="addToInventory()" style="margin-top: 10px;">Add to Inventory</button>
+            </div>
+            <div id="inventoryList"></div>
+        </div>
+
+        <button onclick="generatePlan()" style="margin: 20px 0;">Generate Meal Plan</button>
+
+        <div id="results"></div>
+    </div>
+
+    <script>
+        let inventory = [];
+        
+        function addToInventory() {
+            const item = document.getElementById('newItem').value.trim().toLowerCase();
+            if (item && !inventory.includes(item)) {
+                inventory.push(item);
+                updateInventoryDisplay();
+                document.getElementById('newItem').value = '';
+            }
+        }
+        
+        function updateInventoryDisplay() {
+            const list = document.getElementById('inventoryList');
+            list.innerHTML = inventory.map(item => 
+                `<div class="inventory-item">${item}</div>`
+            ).join('');
+        }
+        
+        function generatePlan() {
+            const goals = {
+                diet_type: document.getElementById('dietType').value,
+                budget: parseFloat(document.getElementById('budget').value),
+                days: parseInt(document.getElementById('days').value),
+                inventory: inventory
+            };
+            
+            fetch('/generate_plan', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(goals)
+            })
+            .then(r => r.json())
+            .then(data => {
+                displayResults(data);
+            });
+        }
+        
+        function displayResults(data) {
+            const results = document.getElementById('results');
+            let html = '<div class="card">';
+            
+            // Meal Plan
+            html += '<h3>📅 Your Meal Plan</h3>';
+            html += `<p><strong>Total Cost: $${data.meal_plan.total_cost}</strong> (${data.meal_plan.budget_status})</p>`;
+            
+            data.meal_plan.meal_plan.forEach(day => {
+                html += `<div style="margin: 20px 0; padding: 15px; background: white; border-radius: 8px;">`;
+                html += `<h4>${day.day_name} - ${day.date}</h4>`;
+                
+                day.meals.forEach(meal => {
+                    html += `<div class="meal-card">`;
+                    html += `<strong>${meal.name}</strong> (${meal.category})<br>`;
+                    html += `💰 $${meal.cost} | ⏱️ ${meal.cook_time}min | 🥗 ${meal.difficulty}<br>`;
+                    html += `Ingredients: ${meal.ingredients.join(', ')}`;
+                    html += `</div>`;
+                });
+                
+                html += `</div>`;
+            });
+            
+            // Shopping List
+            html += '<div class="shopping-list">';
+            html += '<h3>🛒 Shopping List</h3>';
+            data.shopping_list.forEach(item => {
+                html += `<div class="shopping-item">${item}</div>`;
+            });
+            html += '</div>';
+            
+            html += '</div>';
+            results.innerHTML = html;
+        }
+        
+        // Initialize
+        updateInventoryDisplay();
+    </script>
+</body>
+</html>

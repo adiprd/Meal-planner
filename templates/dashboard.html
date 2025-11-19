@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Recipes - Meal Planner</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, sans-serif; background: #f5f5f5; }
+        .container { max-width: 1000px; margin: 0 auto; padding: 20px; }
+        .header { 
+            background: #2ecc71; color: white; padding: 20px; 
+            text-align: center; border-radius: 10px; margin-bottom: 20px;
+        }
+        .recipe-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 20px; }
+        .recipe-card { 
+            background: white; padding: 20px; border-radius: 10px; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .back-btn { 
+            display: inline-block; margin-bottom: 20px; 
+            color: #2ecc71; text-decoration: none; font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <a href="/" class="back-btn">← Back to Planner</a>
+        <div class="header">
+            <h1>📚 Recipe Collection</h1>
+            <p>All available recipes in our database</p>
+        </div>
+        
+        <div class="recipe-grid">
+            {% for recipe in recipes %}
+            <div class="recipe-card">
+                <h3>{{ recipe.name }}</h3>
+                <p><strong>Category:</strong> {{ recipe.category }}</p>
+                <p><strong>Cost:</strong> ${{ recipe.cost }}</p>
+                <p><strong>Time:</strong> {{ recipe.cook_time }}min</p>
+                <p><strong>Difficulty:</strong> {{ recipe.difficulty }}</p>
+                <p><strong>Ingredients:</strong> {{ recipe.ingredients|join(', ') }}</p>
+                <p><strong>Nutrition:</strong> 
+                    {{ recipe.nutrition.calories }} cal, 
+                    P:{{ recipe.nutrition.protein }}g, 
+                    C:{{ recipe.nutrition.carbs }}g, 
+                    F:{{ recipe.nutrition.fat }}g
+                </p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
